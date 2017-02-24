@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -33,10 +34,10 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
-import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -45,6 +46,9 @@ import java.util.concurrent.TimeUnit;
  * low-bit ambient mode, the text is drawn without anti-aliasing in ambient mode.
  */
 public class SunshineWatchFace extends CanvasWatchFaceService {
+    static float sMinTemp, sMaxTemp;
+    static Bitmap sWeatherIconBitmap;
+
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
 
@@ -89,6 +93,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
         Paint mTextPaint;
+        Paint mTextSecondaryPaint;
+        Paint mTextMinTempPaint;
+        Paint mTextMaxTempPaint;
         boolean mAmbient;
         Calendar mCalendar;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -125,8 +132,20 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
             mTextPaint = new Paint();
             mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
+            mTextPaint.setTextAlign(Paint.Align.CENTER);
+
+            mTextSecondaryPaint = createTextPaint(resources.getColor(R.color.digital_text_light));
+            mTextSecondaryPaint.setTextAlign(Paint.Align.CENTER);
+
+            mTextMinTempPaint = createTextPaint(resources.getColor(R.color.digital_text_light));
+            mTextMinTempPaint.setTextAlign(Paint.Align.CENTER);
+
+            mTextMaxTempPaint = createTextPaint(resources.getColor(R.color.digital_text));
+            mTextMaxTempPaint.setTextAlign(Paint.Align.CENTER);
 
             mCalendar = Calendar.getInstance();
+
+            startService(new Intent(getBaseContext(), WatchSyncService.class));
         }
 
         @Override
@@ -190,8 +209,14 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     ? R.dimen.digital_x_offset_round : R.dimen.digital_x_offset);
             float textSize = resources.getDimension(isRound
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
+            float textSizeSecondary = resources.getDimension(isRound
+                    ? R.dimen.digital_text_size_secondary_round
+                    : R.dimen.digital_text_size_secondary);
 
             mTextPaint.setTextSize(textSize);
+            mTextSecondaryPaint.setTextSize(textSizeSecondary);
+            mTextMinTempPaint.setTextSize(textSizeSecondary);
+            mTextMaxTempPaint.setTextSize(textSizeSecondary);
         }
 
         @Override
@@ -236,10 +261,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     // The user has started a different gesture or otherwise cancelled the tap.
                     break;
                 case TAP_TYPE_TAP:
-                    // The user has completed the tap gesture.
-                    // TODO: Add code to handle the tap gesture.
-                    Toast.makeText(getApplicationContext(), R.string.message, Toast.LENGTH_SHORT)
-                            .show();
                     break;
             }
             invalidate();
@@ -254,16 +275,37 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
-            // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            String text = mAmbient
-                    ? String.format("%d:%02d", mCalendar.get(Calendar.HOUR),
-                    mCalendar.get(Calendar.MINUTE))
-                    : String.format("%d:%02d:%02d", mCalendar.get(Calendar.HOUR),
-                    mCalendar.get(Calendar.MINUTE), mCalendar.get(Calendar.SECOND));
-            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+            // Draw the current time in 24h format
+            String time = String.format(Locale.getDefault(), "%02d:%02d",
+                    mCalendar.get(Calendar.HOUR_OF_DAY), mCalendar.get(Calendar.MINUTE));
+            canvas.drawText(time, bounds.centerX(), bounds.centerY() - 60, mTextPaint);
+
+            // Draw the date in ISO format
+            String date = String.format(Locale.getDefault(), "%04d-%02d-%02d",
+                    mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
+                    mCalendar.get(Calendar.DAY_OF_MONTH));
+            canvas.drawText(date, bounds.centerX(), bounds.centerY() - 10, mTextSecondaryPaint);
+
+            if (!isInAmbientMode()) {
+                // Draw a separation line
+                canvas.drawLine(bounds.centerX() - 110f, bounds.centerY(), bounds.centerX() + 110f,
+                        bounds.centerY(), mTextSecondaryPaint);
+
+                // Draw temperature values
+                canvas.drawText(String.format(Locale.getDefault(), "%.1f°", sMaxTemp),
+                        bounds.centerX(), bounds.centerY() + 45, mTextMaxTempPaint);
+                canvas.drawText(String.format(Locale.getDefault(), "%.1f°", sMinTemp),
+                        bounds.centerX() + 85, bounds.centerY() + 45, mTextMinTempPaint);
+
+                // Draw icon
+                if (sWeatherIconBitmap != null) {
+                    canvas.drawBitmap(sWeatherIconBitmap, bounds.centerX() - 105,
+                            bounds.centerY() + 5, mTextPaint);
+                }
+            }
         }
 
         /**
