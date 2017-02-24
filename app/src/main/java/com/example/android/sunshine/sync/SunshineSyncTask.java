@@ -25,6 +25,7 @@ import com.example.android.sunshine.data.WeatherContract;
 import com.example.android.sunshine.utilities.NetworkUtils;
 import com.example.android.sunshine.utilities.NotificationUtils;
 import com.example.android.sunshine.utilities.OpenWeatherJsonUtils;
+import com.example.android.sunshine.utilities.WearUtils;
 
 import java.net.URL;
 
@@ -103,6 +104,15 @@ public class SunshineSyncTask {
                 if (notificationsEnabled && oneDayPassedSinceLastNotification) {
                     NotificationUtils.notifyUserOfNewWeather(context);
                 }
+
+                // Update Android Wear
+                float minTemp = ((Double) (weatherValues[1]
+                        .get(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP))).floatValue();
+                float maxTemp = ((Double) (weatherValues[1]
+                        .get(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP))).floatValue();
+                int condition = ((Integer) (weatherValues[1]
+                        .get(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID)));
+                WearUtils.updateWear(minTemp, maxTemp, condition);
 
             /* If the code reaches this point, we have successfully performed our sync */
 
