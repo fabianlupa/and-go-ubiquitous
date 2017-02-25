@@ -297,15 +297,16 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 // Draw temperature values
                 if (sMaxTemp != null)
                     canvas.drawText(String.format(Locale.getDefault(), "%.1f°", sMaxTemp),
-                            bounds.centerX(), bounds.centerY() + 45, mTextMaxTempPaint);
+                            bounds.centerX() - 70, bounds.centerY() + 45, mTextMaxTempPaint);
                 if (sMinTemp != null)
                     canvas.drawText(String.format(Locale.getDefault(), "%.1f°", sMinTemp),
-                            bounds.centerX() + 85, bounds.centerY() + 45, mTextMinTempPaint);
+                            bounds.centerX() + 70, bounds.centerY() + 45, mTextMinTempPaint);
 
                 // Draw icon
                 if (sWeatherIconBitmap != null) {
-                    canvas.drawBitmap(sWeatherIconBitmap, bounds.centerX() - 105,
-                            bounds.centerY() + 5, mTextPaint);
+                    canvas.drawBitmap(sWeatherIconBitmap,
+                            bounds.centerX() - sWeatherIconBitmap.getWidth() / 2,
+                            bounds.centerY() + 60, mTextPaint);
                 }
             }
         }
