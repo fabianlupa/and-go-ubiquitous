@@ -106,11 +106,11 @@ public class SunshineSyncTask {
                 }
 
                 // Update Android Wear
-                float minTemp = ((Double) (weatherValues[1]
+                float minTemp = ((Double) (weatherValues[0]
                         .get(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP))).floatValue();
-                float maxTemp = ((Double) (weatherValues[1]
+                float maxTemp = ((Double) (weatherValues[0]
                         .get(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP))).floatValue();
-                int condition = ((Integer) (weatherValues[1]
+                int condition = ((Integer) (weatherValues[0]
                         .get(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID)));
                 WearUtils.updateWear(minTemp, maxTemp, condition);
 

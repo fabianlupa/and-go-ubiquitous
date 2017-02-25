@@ -17,29 +17,18 @@ public class WatchSyncService extends WearableListenerService {
     private static final String MAX_TEMP_NAME = "max";
     private static final String CONDITION_NAME = "condition";
 
-    private GoogleApiClient mGoogleApiClient;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .build();
-    }
-
     @Override
     public void onDataChanged(DataEventBuffer dataEventBuffer) {
         for (DataEvent event : dataEventBuffer) {
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 DataItem item = event.getDataItem();
-                if (item.getUri().getPath().equals("/weather")) {
+                if (item.getUri().getPath().equals(WEATHER_UPDATE_PATH)) {
                     SunshineWatchFace.sMinTemp
-                            = DataMapItem.fromDataItem(item).getDataMap().getFloat("min");
+                            = DataMapItem.fromDataItem(item).getDataMap().getFloat(MIN_TEMP_NAME);
                     SunshineWatchFace.sMaxTemp
-                            = DataMapItem.fromDataItem(item).getDataMap().getFloat("max");
+                            = DataMapItem.fromDataItem(item).getDataMap().getFloat(MAX_TEMP_NAME);
                     int condition = getWeatherIconId(DataMapItem.fromDataItem(item).getDataMap()
-                            .getInt("condition"));
+                            .getInt(CONDITION_NAME));
                     SunshineWatchFace.sWeatherIconBitmap
                             = ((BitmapDrawable) getResources().getDrawable(condition, null))
                             .getBitmap();
