@@ -17,17 +17,6 @@ public class WatchSyncService extends WearableListenerService {
     private static final String MAX_TEMP_NAME = "max";
     private static final String CONDITION_NAME = "condition";
 
-    private GoogleApiClient mGoogleApiClient;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .build();
-    }
-
     @Override
     public void onDataChanged(DataEventBuffer dataEventBuffer) {
         for (DataEvent event : dataEventBuffer) {
